@@ -21,25 +21,23 @@
 
         <swagger2markup.version>1.2.0</swagger2markup.version>
         <asciidoctor.input.directory>${project.basedir}/src/docs/asciidoc</asciidoctor.input.directory>
-        <swagger.output.dir>${project.build.directory}/swagger</swagger.output.dir>
+        <!--<swagger.output.dir>${project.build.directory}/swagger</swagger.output.dir>
         <swagger.snippetOutput.dir>${project.build.directory}/asciidoc/snippets</swagger.snippetOutput.dir>
+          -->
         <generated.asciidoc.directory>${project.build.directory}/asciidoc/generated</generated.asciidoc.directory>
         <asciidoctor.html.output.directory>${project.build.directory}/asciidoc/html</asciidoctor.html.output.directory>
         <asciidoctor.pdf.output.directory>${project.build.directory}/asciidoc/pdf</asciidoctor.pdf.output.directory>
-        <swagger.input>${swagger.output.dir}/swagger.json</swagger.input>
+        <!-- 可以使用json文件和url在线地址 -->
+        <!--<swagger.input>${swagger.output.dir}/swagger.json</swagger.input>-->
+		<swagger.input>http://localhost:8080/v2/api-docs</swagger.input>
         <springfox.version>2.9.2</springfox.version>
     </properties>
 
     <pluginRepositories>
         <pluginRepository>
-            <id>jcenter-snapshots</id>
-            <name>jcenter</name>
-            <url>http://oss.jfrog.org/artifactory/oss-snapshot-local/</url>
-        </pluginRepository>
-        <pluginRepository>
-            <id>jcenter-releases</id>
-            <name>jcenter</name>
-            <url>http://jcenter.bintray.com</url>
+            <id>spring-plugins</id>
+            <name>spring-plugins</name>
+            <url>https://repo.spring.io/plugins-release/</url>
             <snapshots>
                 <enabled>false</enabled>
             </snapshots>
@@ -48,17 +46,12 @@
 
     <repositories>
         <repository>
-            <id>jcentral</id>
-            <name>bintray</name>
-            <url>http://jcenter.bintray.com</url>
+            <id>spring-plugins</id>
+            <name>spring-plugins</name>
+            <url>https://repo.spring.io/plugins-release/</url>
             <snapshots>
                 <enabled>false</enabled>
             </snapshots>
-        </repository>
-        <repository>
-            <id>jcenter-snapshots</id>
-            <name>jcenter</name>
-            <url>http://oss.jfrog.org/artifactory/oss-snapshot-local/</url>
         </repository>
     </repositories>
 
@@ -130,17 +123,6 @@
                 </configuration>
             </plugin>
 
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <configuration>
-                    <systemPropertyVariables>
-                        <io.springfox.staticdocs.outputDir>${swagger.output.dir}</io.springfox.staticdocs.outputDir>
-                        <io.springfox.staticdocs.snippetsOutputDir>${swagger.snippetOutput.dir}</io.springfox.staticdocs.snippetsOutputDir>
-                    </systemPropertyVariables>
-                </configuration>
-            </plugin>
-
             <!-- First, use the swagger2markup plugin to generate asciidoc -->
             <plugin>
                 <groupId>io.github.swagger2markup</groupId>
@@ -164,7 +146,7 @@
                     <config>
                         <swagger2markup.markupLanguage>ASCIIDOC</swagger2markup.markupLanguage>
                         <swagger2markup.pathsGroupedBy>TAGS</swagger2markup.pathsGroupedBy>
-
+                        
                         <swagger2markup.extensions.dynamicOverview.contentPath>${project.basedir}/src/docs/asciidoc/extensions/overview</swagger2markup.extensions.dynamicOverview.contentPath>
                         <swagger2markup.extensions.dynamicDefinitions.contentPath>${project.basedir}/src/docs/asciidoc/extensions/definitions</swagger2markup.extensions.dynamicDefinitions.contentPath>
                         <swagger2markup.extensions.dynamicPaths.contentPath>${project.basedir}/src/docs/asciidoc/extensions/paths</swagger2markup.extensions.dynamicPaths.contentPath>
@@ -172,11 +154,12 @@
 
                         <swagger2markup.extensions.springRestDocs.snippetBaseUri>${swagger.snippetOutput.dir}</swagger2markup.extensions.springRestDocs.snippetBaseUri>
                         <swagger2markup.extensions.springRestDocs.defaultSnippets>true</swagger2markup.extensions.springRestDocs.defaultSnippets>
+						
                     </config>
                 </configuration>
                 <executions>
                     <execution>
-                        <phase>test</phase>
+                        <phase>generate-resources</phase>
                         <goals>
                             <goal>convertSwagger2markup</goal>
                         </goals>
@@ -206,7 +189,7 @@
                 <!-- Configure generic document generation settings -->
                 <configuration>
                     <sourceDirectory>${asciidoctor.input.directory}</sourceDirectory>
-                    <sourceDocumentName>index.adoc</sourceDocumentName>
+                    <!--<sourceDocumentName>index.adoc</sourceDocumentName>  -->
                     <attributes>
                         <doctype>book</doctype>
                         <toc>left</toc>
@@ -223,7 +206,7 @@
                 <executions>
                     <execution>
                         <id>output-html</id>
-                        <phase>test</phase>
+                        <phase>generate-resources</phase>
                         <goals>
                             <goal>process-asciidoc</goal>
                         </goals>
@@ -235,13 +218,20 @@
 
                     <execution>
                         <id>output-pdf</id>
-                        <phase>test</phase>
+                        <phase>generate-resources</phase>
                         <goals>
                             <goal>process-asciidoc</goal>
                         </goals>
                         <configuration>
                             <backend>pdf</backend>
                             <outputDirectory>${asciidoctor.pdf.output.directory}</outputDirectory>
+                            <!-- 中文显示不全的问题，可以自定义字体和样式 -->
+                            <!-- 参考 https://blog.csdn.net/lihuaijun/article/details/79727863 -->
+                            <!-- 
+                           	<pdf-fontsdir>${project.basedir}/src/docs/fonts</pdf-fontsdir>
+							<pdf-stylesdir>${project.basedir}/src/docs/themes</pdf-stylesdir>
+		                    <pdf-style>cn</pdf-style>
+		                     -->
                         </configuration>
                     </execution>
 
@@ -252,7 +242,6 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
-                <version>3.1.0</version>
                 <configuration>
                     <archive>
                         <manifest>
@@ -286,7 +275,6 @@
             <!-- copy the generated documents -->
             <plugin>
                 <artifactId>maven-resources-plugin</artifactId>
-                <version>3.1.0</version>
                 <executions>
                     <execution>
                         <id>copy-resources</id>
